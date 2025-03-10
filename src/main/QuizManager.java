@@ -37,4 +37,10 @@ public class QuizManager
             System.out.println(e);
         }
     }
+
+    public void menu()
+    {
+        System.out.println("1. Answer Questions");
+        System.out.println("2. Exit");
+    }
 }
