@@ -1,21 +1,21 @@
 package main;
 
-import java.util.Scanner;
-
 public class MainInstance
 {
-	private static Scanner scanner;
-
 	public static void main(String[] args)
 	{
 		QuizManager quizManager = new QuizManager();
-		scanner = new Scanner(System.in);
+		quizManager.setIsProgramRunning(true);
 
-		while (true)
+		quizManager.setPassword("Amogamog");
+		quizManager.connectToDatabase();
+
+		while (quizManager.getIsProgramRunning())
 		{
-			break;
+			quizManager.menu();
 		}
 
 		quizManager.closeAllConnection();
+		System.exit(0);
 	}
 }
