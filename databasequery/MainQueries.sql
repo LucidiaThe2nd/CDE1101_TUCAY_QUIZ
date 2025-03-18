@@ -20,3 +20,18 @@ VALUES
 (3, 'What does SQL stand for?', 'Structured Query Language', 'Simple Query Logic', 'Systematic Query Language', 'Sequential Query Language', 'Structured Query Language'),  
 (4, 'Which language is primarily used for building Android apps?', 'Swift', 'Java', 'C#', 'Go', 'Java'),  
 (5, 'What does HTML stand for?', 'Hyper Transfer Markup Language', 'Hyper Text Markup Language', 'Hyper Tool Management Language', 'High-level Text Markup Language', 'Hyper Text Markup Language');
+
+CREATE TABLE users(
+    student_id VARCHAR(255) PRIMARY KEY,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    password VARCHAR(255)
+);
+
+SELECT * FROM users;
+
+INSERT INTO users(student_id, first_name, last_name, password)
+VALUES
+('123', 'John', 'Doe', 'password123'),
+('456', 'Jane', 'Smith', 'password456'),
+('789', 'Bob', 'Johnson', 'password789');

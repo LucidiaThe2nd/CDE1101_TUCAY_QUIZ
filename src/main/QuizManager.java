@@ -1,7 +1,7 @@
 package main;
 
-import java.sql.*;
 import java.util.Scanner;
+import java.util.Random;
 
 public class QuizManager 
 {
@@ -9,18 +9,28 @@ public class QuizManager
     private String question, option1, option2, option3, option4, answer;
     private Scanner scanner = new Scanner(System.in);
 
-    private String password;
 
     private int questionCount;
 
-    private Connection connection;
-    private ProgramStatus programStatus;
-
     private Boolean isProgramRunning = true;
 
-    public QuizManager()
+    private QuizManager() {}
+
+    private static class QuizManagerHolder
     {
-        programStatus = ProgramStatus.MENU;
+        private static final QuizManager INSTANCE = new QuizManager();
+    }
+
+    /**
+     * Gets the instance of the QuizManager class.
+     * 
+     * This method returns the singleton instance of the QuizManager class.
+     * 
+     * @return The singleton instance of the QuizManager class.
+     */
+    public static QuizManager getInstance()
+    {
+        return QuizManagerHolder.INSTANCE;
     }
 
     public Boolean getIsProgramRunning()
@@ -31,46 +41,6 @@ public class QuizManager
     public void setIsProgramRunning(Boolean isProgramRunning)
     {
         this.isProgramRunning = isProgramRunning;
-    }
-
-    public void setPassword(String password)
-    {
-        this.password = password;
-    }
-
-    /**
-     * Connects to the database.
-     * 
-     * This method will execute a SQL query to connect to the database, and print
-     * a success message if the connection is successful. If an error occurs, the
-     * error message will be printed.
-     */
-    public void connectToDatabase()
-    {
-        try
-        {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/cde1101_daaf_tucay", "root", password);
-            System.out.println("Connected to the database");
-        }
-        catch (Exception e)
-        {
-            System.out.println(e);
-            System.out.println("Failed to connect to the database. Exiting...");
-            System.exit(1);
-        }   
-    }
-
-    void closeAllConnection()
-    {
-        try
-        {
-            connection.close();
-        }
-        catch (Exception e)
-        {
-            System.out.println(e);
-        }
     }
 
     /**
@@ -97,51 +67,14 @@ public class QuizManager
             
         }
 
-
-        try
-        {
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM questions WHERE question_id = " + id);
-            while (resultSet.next())
-            {
-                question = resultSet.getString("question");
-                option1 = resultSet.getString("option_1");
-                option2 = resultSet.getString("option_2");
-                option3 = resultSet.getString("option_3");
-                option4 = resultSet.getString("option_4");
-                answer = resultSet.getString("answer");
-            }
-        }
-        catch (Exception e)
-        {
-            System.out.println(e);
-        }
-
         printQuestion();
     }
 
-    /**
-     * Fetches the total number of questions from the database.
-     * 
-     * This method will execute a SQL query to fetch the total number of
-     * questions from the database, and store the result in the questionCount
-     * field. If an error occurs, the error message will be printed.
-     */
-    void getQuestionCount()
+    void fetchRandomQuestion()
     {
-        try
-        {
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT COUNT(*) FROM questions");
-            while (resultSet.next())
-            {
-                questionCount = resultSet.getInt(1);
-            }
-        }
-        catch (Exception e)
-        {
-            System.out.println(e);
-        }
+        Random random = new Random();
+        id = random.nextInt(questionCount) + 1;
+        printQuestion();
     }
 
     /**
@@ -157,7 +90,6 @@ public class QuizManager
     void printQuestion()
     {
         scanner.nextLine();
-        programStatus = ProgramStatus.QUIZ;
 
         System.out.println("Question #" + id + ": " + question);
         System.out.println("A. " + option1);
@@ -187,14 +119,15 @@ public class QuizManager
         {
             case "x":
                 id += 1;
-                break;
+                fetchCurrentQuestion(id);
+                return;
             case "z":
                 id -= 1;
-                break;
+                fetchCurrentQuestion(id);
+                return;
             case "r":
-                programStatus = ProgramStatus.MENU;
                 menu();
-                break;
+                return;
             default:
                 if (userAnswer.equals(answer))
                 {
@@ -227,23 +160,101 @@ public class QuizManager
     void menu()
     {
         System.out.println("1. Answer Questions");
-        System.out.println("2. Exit");
+        System.out.println("2. Random Questions");
+        System.out.println("3. Exit");
         System.out.print("Enter your choice: ");
 
         switch (scanner.nextInt())
         {
             case 1:
                 id = 1;
-                getQuestionCount();
+                DatabaseCommunicator.getInstance().getQuestionCount();
                 fetchCurrentQuestion(id);
                 break;
             case 2:
+                break;
+            case 3:
                 setIsProgramRunning(false);
-                closeAllConnection();
+                DatabaseCommunicator.getInstance().closeAllConnection();
                 System.exit(0);
                 return;
             default:
                 break;
         }
+    }
+
+    public void setID(int thisValue)
+    {
+        this.id = thisValue;
+    }
+
+    public int getID()
+    {
+        return this.id;
+    }
+
+    public void setQuestion(String thisValue)
+    {
+        this.question = thisValue;
+    }
+
+    public String getQuestion()
+    {
+        return this.question;
+    }
+
+    public void setOption1(String thisValue)
+    {
+        this.option1 = thisValue;
+    }
+
+    public String getOption1()
+    {
+        return this.option1;
+    }
+
+    public void setOption2(String thisValue)
+    {
+        this.option2 = thisValue;
+    }
+
+    public String getOption2()
+    {
+        return this.option2;
+    }
+
+    public void setOption3(String thisValue)
+    {
+        this.option3 = thisValue;
+    }
+
+    public String getOption3()
+    {
+        return this.option3;
+    }
+
+    public void setOption4(String thisValue)
+    {
+        this.option4 = thisValue;
+    }
+
+    public String getOption4()
+    {
+        return this.option4;
+    }
+
+    public void setAnswer(String thisValue)
+    {
+        this.answer = thisValue;
+    }
+
+    public String getAnswer()
+    {
+        return this.answer;
+    }
+
+    public void setQuestionCount(int thisValue)
+    {
+        this.questionCount = thisValue;
     }
 }
