@@ -1,6 +1,7 @@
 package main;
 
 import java.sql.*;
+import java.util.List;
 
 public class DatabaseCommunicator
 {
@@ -97,5 +98,48 @@ public class DatabaseCommunicator
         {
             System.out.println(e);
         }
+    }
+    
+
+    public String[] fetchStudentID()
+    {
+        try
+        {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT student_id FROM users");
+            List<String> list = new java.util.ArrayList<String>();
+            while (resultSet.next())
+            {
+                list.add(resultSet.getString("student_id"));
+            }
+            return list.toArray(new String[0]);
+        }
+        catch (Exception e)
+        {
+            System.out.println(e);
+        }
+
+        return null;
+    }
+
+    public String[] fetchPasswords()
+    {
+        try
+        {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT password FROM users");
+            List<String> list = new java.util.ArrayList<String>();
+            while (resultSet.next())
+            {
+                list.add(resultSet.getString("password"));
+            }
+            return list.toArray(new String[0]);
+        }
+        catch (Exception e)
+        {
+            System.out.println(e);
+        }
+
+        return null;
     }
 }

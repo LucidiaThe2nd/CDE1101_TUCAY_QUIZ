@@ -67,6 +67,8 @@ public class QuizManager
             
         }
 
+        DatabaseCommunicator.getInstance().fetchCurrentQuestion(id);
+
         printQuestion();
     }
 
