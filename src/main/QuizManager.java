@@ -1,6 +1,7 @@
 package main;
 
 import java.util.Scanner;
+import java.util.List;
 import java.util.Random;
 
 public class QuizManager 
@@ -9,10 +10,10 @@ public class QuizManager
     private String question, option1, option2, option3, option4, answer;
     private Scanner scanner = new Scanner(System.in);
 
+    DatabaseCommunicator databaseCommunicator;
+    UserAuthenticator userAuthenticator = UserAuthenticator.getInstance();
 
     private int questionCount;
-
-    private Boolean isProgramRunning = true;
 
     private QuizManager() {}
 
@@ -31,16 +32,6 @@ public class QuizManager
     public static QuizManager getInstance()
     {
         return QuizManagerHolder.INSTANCE;
-    }
-
-    public Boolean getIsProgramRunning()
-    {
-        return isProgramRunning;
-    }
-
-    public void setIsProgramRunning(Boolean isProgramRunning)
-    {
-        this.isProgramRunning = isProgramRunning;
     }
 
     /**
@@ -149,36 +140,113 @@ public class QuizManager
         fetchCurrentQuestion(id);
     }
 
-    /**
-     * Displays the main menu of the quiz application and handles user input.
-     * 
-     * The menu offers two options:
-     * 1. Start answering quiz questions.
-     * 2. Exit the application.
-     * 
-     * Based on the user's choice, the program will either set the status to QUIZ
-     * and fetch the first question, or it will stop the program from running.
-     */
+    public void startQuiz(int userId)
+    {
+        if (!databaseCommunicator.hasUnfinishedQuiz(userId)) {
+            databaseCommunicator.generateQuizQuestions(userId);
+        }
+
+        resumeQuiz(userId);
+    }
+
+    private void resumeQuiz(int userId) {
+        List<Question> questions = databaseCommunicator.getQuizQuestions(userId);
+        int position = databaseCommunicator.getCurrentPosition(userId);
+        int totalQuestions = questions.size();
+
+        if (questions.isEmpty()) {
+            System.out.println("No quiz found.");
+            return;
+        }
+
+        while (true) {
+            Question q = questions.get(position - 1);
+
+            System.out.println("\nQuestion " + position + "/" + totalQuestions);
+            System.out.println(q.getQuestion());
+            System.out.println("A) " + q.getOptionA());
+            System.out.println("B) " + q.getOptionB());
+            System.out.println("C) " + q.getOptionC());
+            System.out.println("D) " + q.getOptionD());
+            System.out.println("[Your Answer: " + (q.getUserAnswer() != null ? q.getUserAnswer() : "None") + "]");
+
+            System.out.println("\nOptions: [N]ext | [P]revious | [A-D] Answer | [S]ubmit Quiz | [E]xit and Resume Later");
+            System.out.print("Choice: ");
+            String input = scanner.nextLine().trim().toUpperCase();
+
+            switch (input) {
+                case "N":
+                    if (position < totalQuestions) {
+                        position++;
+                        databaseCommunicator.updateCurrentPosition(userId, position);
+                    } else {
+                        System.out.println("You're on the last question.");
+                    }
+                    break;
+
+                case "P":
+                    if (position > 1) {
+                        position--;
+                        databaseCommunicator.updateCurrentPosition(userId, position);
+                    } else {
+                        System.out.println("You're on the first question.");
+                    }
+                    break;
+
+                case "A": case "B": case "C": case "D":
+                databaseCommunicator.saveAnswer(userId, q.getId(), input);
+                    q.setUserAnswer(input);
+                    System.out.println("Answer saved!");
+                    break;
+                case "E":
+                    System.out.println("Your progress has been saved. You can resume later.");
+                    return; // Exit the quiz loop but keep progress saved.
+                case "S":
+                    if (confirmSubmit()) {
+                        databaseCommunicator.markQuizComplete(userId);
+                        System.out.println("Quiz submitted successfully!");
+                        return;
+                    }
+                    break;
+
+                default:
+                    System.out.println("Invalid input! Try again.");
+            }
+        }
+    }
+
+    private boolean confirmSubmit()
+    {
+        System.out.print("Are you sure you want to submit the quiz? (yes/no): ");
+        String confirm = scanner.nextLine().trim().toLowerCase();
+        return confirm.equals("yes");
+    }
+
     void menu()
     {
-        System.out.println("1. Answer Questions");
-        System.out.println("2. Random Questions");
-        System.out.println("3. Exit");
+        if (databaseCommunicator == null)
+        {
+            databaseCommunicator = DatabaseCommunicator.getInstance();
+        }
+
+        System.out.println("1. Start Quiz");
+        System.out.println("2. Resume Quiz");
+        System.out.println("3. Logout");
         System.out.print("Enter your choice: ");
 
         switch (scanner.nextInt())
         {
             case 1:
-                id = 1;
-                DatabaseCommunicator.getInstance().getQuestionCount();
-                fetchCurrentQuestion(id);
+                scanner.nextLine();
+                startQuiz(userAuthenticator.getCurrentStudentID());
                 break;
             case 2:
+                scanner.nextLine();
+                resumeQuiz(userAuthenticator.getCurrentStudentID());
                 break;
             case 3:
-                setIsProgramRunning(false);
-                DatabaseCommunicator.getInstance().closeAllConnection();
-                System.exit(0);
+                System.out.println("Logging out...");
+                userAuthenticator.setLoggedOut();
                 return;
             default:
                 break;
